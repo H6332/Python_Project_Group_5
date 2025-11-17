@@ -147,16 +147,14 @@ def check_win(matrix, rows, cols, mine_count):
 #        ⭐ 主遊戲迴圈（含 R 重開）
 # ===============================
 def game_loop():
-    while True:  # ← 整個遊戲（包含重新開始）
+    while True:  # 整個遊戲（包含重新開始）
         level = choose_difficulty()
         matrix, rows, cols, mine_count = create_board(level)
 
-        # 計算數字
         for r in range(rows):
             for c in range(cols):
                 if not matrix[r][c].is_mine:
-                    matrix[r][c].number = count_adjacent_mines(
-                        matrix, r, c, rows, cols)
+                    matrix[r][c].number = count_adjacent_mines(matrix, r, c, rows, cols)
 
         print_board(matrix, rows, cols)
 
@@ -165,10 +163,10 @@ def game_loop():
             print("指令：O(翻開) F(插旗) U(拔旗) R(重開新局)")
             command = input("請輸入指令: ").upper()
 
-            # ⭐ 隨時重新開始
+            # ⭐ 直接重開新局
             if command == "R":
                 print("\n🔄 正在開始新的一局...\n")
-                break  # ← 跳出本局，回到外層 while 開始新局
+                break
 
             if command not in ("O", "F", "U"):
                 print("指令錯誤")
@@ -201,7 +199,7 @@ def game_loop():
                             matrix[rr][cc].clicked = True
 
                     print_board(matrix, rows, cols)
-                    break  # ← 跳去詢問是否重玩
+                    break
 
             print_board(matrix, rows, cols)
 
@@ -209,7 +207,6 @@ def game_loop():
                 print("🎉 恭喜你贏了！")
                 break
 
-        # ========== 局結束 → 詢問是否再玩 ==========
         again = input("要再玩一局嗎？(Y/N): ").upper()
         if again != "Y":
             print("感謝遊玩，再見！")
