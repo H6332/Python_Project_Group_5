@@ -1,14 +1,12 @@
 import random
 from collections import deque
 
-
 class Board_Information:
     def __init__(self, has_been_clicked=False, is_mine=False, is_flag=False):
         self.clicked = has_been_clicked
         self.is_mine = is_mine
         self.flag = is_flag
         self.number = 0  # 周圍地雷數
-
 
 def create_board(level):
     if level == 1:
@@ -28,16 +26,14 @@ def create_board(level):
 
     return matrix, rows, cols, mine
 
-
 def introduction():
     print("==== 歡迎來到踩地雷 ====")
-    print("O = 翻開格子")
-    print("F = 插旗")
-    print("U = 拔旗")
-    print("R = 重新開始新的一局（隨時可用）")
-    print("ROW、COL 從 0 開始計算")
+    print("預設為「挖掘模式」，輸入座標即可挖掘")
+    print("輸入 'D' 可切換回「挖掘模式」 (Dig)") # 修改說明
+    print("輸入 'F' 可切換至「插旗模式」 (Flag)")
+    print("輸入 'R' 可隨時重新開始")
+    print("地圖符號： #=未翻開 *=地雷") 
     print("=======================")
-
 
 def choose_difficulty():
     while True:
@@ -45,7 +41,6 @@ def choose_difficulty():
         if level in ("1", "2", "3"):
             return int(level)
         print("輸入錯誤，請重新輸入。")
-
 
 def count_adjacent_mines(matrix, r, c, rows, cols):
     count = 0
@@ -59,46 +54,65 @@ def count_adjacent_mines(matrix, r, c, rows, cols):
                     count += 1
     return count
 
-
-def print_board(matrix, rows, cols):
-    print("\n   ", end="")
+def print_board(matrix, rows, cols, mine_count):
+    # --- 1. 先印地圖 ---
+    print("\n   ", end="") 
     for c in range(cols):
-        print(f"{c:2}", end=" ")
+        print(f"{c+1:^3}", end="")
     print()
+    
+    print("   " + "-" * (cols * 3))
 
     for r in range(rows):
-        print(f"{r:2} ", end="")
-        row_display = []
+        print(f"{r+1:<2}|", end="")
+        
         for c in range(cols):
             cell = matrix[r][c]
+            
             if cell.flag:
-                row_display.append("🚩")
+                symbol = "F"
             elif not cell.clicked:
-                row_display.append("■")
+                symbol = "#"
             else:
                 if cell.is_mine:
-                    row_display.append("💣")
+                    symbol = "*"
                 else:
-                    row_display.append(str(cell.number))
-        print(" ".join(row_display))
-    print()
+                    symbol = str(cell.number) if cell.number > 0 else " "
 
+            print(f"{symbol:^3}", end="")
+        
+        print() 
+        print()
+
+    # --- 2. 狀態資訊 (已修改邏輯與符號) ---
+    unrevealed_count = 0
+    flag_count = 0
+    
+    for r in range(rows):
+        for c in range(cols):
+            if matrix[r][c].flag:
+                flag_count += 1
+            # 修改重點：只有「沒被翻開」且「沒被插旗」的才算入未翻開數量
+            elif not matrix[r][c].clicked:
+                unrevealed_count += 1
+    
+    print("-" * (cols * 3 + 4))
+    # 修改重點：符號改成 ■，且 unrevealed_count 是扣除旗子後的數量
+    print(f"📊 狀態： 💣 地雷總數: {mine_count} | 🚩 已插旗: {flag_count} | ■ 未翻開: {unrevealed_count}")
+    print("-" * (cols * 3 + 4))
 
 def toggle_flag(matrix, r, c):
+    """ 智慧插旗：有旗子就拔掉，沒旗子就插上 """
     cell = matrix[r][c]
     if cell.clicked:
         print("不能在已翻開的格子插旗！")
         return
-    cell.flag = True
-
-
-def unflag(matrix, r, c):
-    cell = matrix[r][c]
-    if not cell.flag:
-        print("這格沒有旗子可以拔。")
-        return
-    cell.flag = False
-
+    
+    cell.flag = not cell.flag # 切換狀態
+    if cell.flag:
+        print(">>> 已插旗")
+    else:
+        print(">>> 已拔旗")
 
 def reveal_cell(matrix, rows, cols, r, c):
     cell = matrix[r][c]
@@ -132,7 +146,6 @@ def reveal_cell(matrix, rows, cols, r, c):
 
     return False
 
-
 def check_win(matrix, rows, cols, mine_count):
     clicked_count = 0
     for r in range(rows):
@@ -147,7 +160,7 @@ def check_win(matrix, rows, cols, mine_count):
 #        ⭐ 主遊戲迴圈（含 R 重開）
 # ===============================
 def game_loop():
-    while True:  # 整個遊戲（包含重新開始）
+    while True:  # 整個遊戲
         level = choose_difficulty()
         matrix, rows, cols, mine_count = create_board(level)
 
@@ -156,40 +169,54 @@ def game_loop():
                 if not matrix[r][c].is_mine:
                     matrix[r][c].number = count_adjacent_mines(matrix, r, c, rows, cols)
 
-        print_board(matrix, rows, cols)
+        # 修改重點：預設模式改為 'D' (Dig)
+        current_mode = 'D' 
+        
+        print_board(matrix, rows, cols, mine_count)
 
         # ========== 單局遊戲 ==========
         while True:
-            print("指令：O(翻開) F(插旗) U(拔旗) R(重開新局)")
-            command = input("請輸入指令: ").upper()
+            # 修改重點：顯示名稱改為「挖掘 (D)」
+            mode_name = "挖掘 (D)" if current_mode == 'D' else "插旗/拔旗 (F)"
+            print(f"目前模式: 【 {mode_name} 】")
+            
+            # 修改重點：提示文字改為 D/F
+            user_input = input(f"請輸入 ROW (1~{rows}) 或輸入 D/F 切換, R 重開: ").upper().strip()
 
-            # ⭐ 直接重開新局
-            if command == "R":
+            if user_input == "R":
                 print("\n🔄 正在開始新的一局...\n")
                 break
-
-            if command not in ("O", "F", "U"):
-                print("指令錯誤")
+            
+            # 修改重點：判斷 'D' 指令
+            if user_input == "D":
+                current_mode = 'D'
+                print(">>> 切換為：挖掘模式")
+                continue 
+            
+            if user_input == "F":
+                current_mode = 'F'
+                print(">>> 切換為：插旗模式")
                 continue
 
             try:
-                r = int(input("ROW: "))
-                c = int(input("COL: "))
-            except:
-                print("輸入錯誤")
+                r = int(user_input) - 1 
+                input_c = input(f"請輸入 COL (1~{cols}): ")
+                c = int(input_c) - 1 
+
+            except ValueError:
+                # 修改重點：錯誤提示改為 D
+                print("輸入錯誤，請輸入數字或指令 (D, F, R)")
                 continue
 
             if not (0 <= r < rows and 0 <= c < cols):
-                print("超出地圖範圍")
+                print(f"超出地圖範圍 (請輸入 1 ~ {rows} 之間的數字)")
                 continue
 
-            if command == "F":
+            if current_mode == "F":
                 toggle_flag(matrix, r, c)
 
-            elif command == "U":
-                unflag(matrix, r, c)
-
-            elif command == "O":
+            # 修改重點：執行挖掘 (D) 模式
+            elif current_mode == "D":
                 hit_mine = reveal_cell(matrix, rows, cols, r, c)
                 if hit_mine:
                     print("💥 你踩到地雷！遊戲結束！")
@@ -197,26 +224,24 @@ def game_loop():
                     for rr in range(rows):
                         for cc in range(cols):
                             matrix[rr][cc].clicked = True
+                    
+                    print_board(matrix, rows, cols, mine_count)
+                    break 
 
-                    print_board(matrix, rows, cols)
-                    break
-
-            print_board(matrix, rows, cols)
+            print_board(matrix, rows, cols, mine_count)
 
             if check_win(matrix, rows, cols, mine_count):
                 print("🎉 恭喜你贏了！")
-                break
+                break 
 
         again = input("要再玩一局嗎？(Y/N): ").upper()
         if again != "Y":
             print("感謝遊玩，再見！")
             return
 
-
 def main():
     introduction()
     game_loop()
-
 
 if __name__ == "__main__":
     main()
