@@ -7,7 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1f6OpgJBHjfBefzJYUgpJCmlil8PYxrNA
 """
 
-# -*- coding: utf-8 -*-
 import random
 from collections import deque
 import time
