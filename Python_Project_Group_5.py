@@ -7,6 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1f6OpgJBHjfBefzJYUgpJCmlil8PYxrNA
 """
 
+
 # -*- coding: utf-8 -*-
 """Python_Project_Group_5
 
@@ -65,6 +66,7 @@ def place_mines(matrix, rows, cols, mine_count, safe_r, safe_c):
                 matrix[r][c].number = count_adjacent_mines(matrix, r, c, rows, cols)
 
 
+
 def introduction():
     print("==== 歡迎來到踩地雷 ====")
     print("預設為「挖掘模式」，輸入座標即可挖掘")
@@ -96,13 +98,12 @@ def count_adjacent_mines(matrix, r, c, rows, cols):
     return count
 
 
+
 def print_board(matrix, rows, cols, mine_count, start_time=None):
     elapsed = 0
     if start_time is not None:
         elapsed = int(time.time() - start_time)
 
-
-    # --- 1. 先印地圖 ---
     print("\n   ", end="")
     for c in range(cols):
         print(f"{c+1:^3}", end="")
@@ -112,8 +113,12 @@ def print_board(matrix, rows, cols, mine_count, start_time=None):
     for r in range(rows):
         print(f"{r+1:<2}|", end="")
 
+
+
         for c in range(cols):
             cell = matrix[r][c]
+
+
 
             if cell.flag:
                 symbol = "F"
@@ -131,6 +136,7 @@ def print_board(matrix, rows, cols, mine_count, start_time=None):
     unrevealed_count = 0
     flag_count = 0
 
+
     for r in range(rows):
         for c in range(cols):
             if matrix[r][c].flag:
@@ -140,22 +146,25 @@ def print_board(matrix, rows, cols, mine_count, start_time=None):
 
     print("-" * (cols * 3 + 4))
     print(f"📊 狀態： 💣 地雷總數: {mine_count} | 🚩 已插旗: {flag_count} | # 未翻開: {unrevealed_count}")
-    print("-" * (cols * 3 + 4))
     print(f"⏱ 已用時間: {elapsed} 秒")
+    print("-" * (cols * 3 + 4))
+
 
 
 def toggle_flag(matrix, r, c, mine_count):
     """智慧插旗 + 限制旗子數量不可超過地雷數"""
+    # 先取得目標格子
     cell = matrix[r][c]
 
+    # 不能在已翻開的格子插旗
     if cell.clicked:
         print("不能在已翻開的格子插旗！")
         return
 
-    # 計算目前旗子數
-    flag_count = sum(1 for row in matrix for cell in row if cell.flag)
+    # 計算目前旗子數（使用不同變數名稱避免 comprehension 變數混淆）
+    flag_count = sum(1 for row in matrix for cell_ in row if cell_.flag)
 
-    # 嘗試插旗（原本沒有旗）
+    # 嘗試插旗（原本沒有旗）且旗子已達上限
     if not cell.flag and flag_count >= mine_count:
         print("🚫 旗子已達上限，不能再插了！")
         return
@@ -166,6 +175,8 @@ def toggle_flag(matrix, r, c, mine_count):
         print(">>> 已插旗")
     else:
         print(">>> 已拔旗")
+
+
 
 
 def reveal_cell(matrix, rows, cols, r, c):
@@ -197,6 +208,7 @@ def reveal_cell(matrix, rows, cols, r, c):
 def check_win(matrix, rows, cols, mine_count):
     clicked_count = sum(1 for r in range(rows) for c in range(cols)
                         if matrix[r][c].clicked)
+
     return clicked_count == rows * cols - mine_count
 
 # ---------- 主遊戲迴圈 ----------
@@ -209,6 +221,7 @@ def game_loop():
         start_time = time.time()
         print_board(matrix, rows, cols, mine_count, start_time)
 
+
         # 計算每格周圍地雷數
         for r in range(rows):
             for c in range(cols):
@@ -216,9 +229,11 @@ def game_loop():
                     matrix[r][c].number = count_adjacent_mines(
                         matrix, r, c, rows, cols)
 
+
         current_mode = 'D'  # 預設挖掘
 
         print_board(matrix, rows, cols, mine_count, start_time)
+
 
         while True:
             mode_name = "挖掘 (D)" if current_mode == 'D' else "插旗/拔旗 (F)"
@@ -226,6 +241,7 @@ def game_loop():
 
             user_input = input(
                 f"請輸入 ROW (1~{rows}) 或輸入 D/F 切換, R 重開: ").upper().strip()
+
 
             if user_input == "R":
                 print("\n🔄 正在開始新的一局...\n")
@@ -245,6 +261,7 @@ def game_loop():
                 r = int(user_input) - 1
                 input_c = input(f"請輸入 COL (1~{cols}): ")
                 c = int(input_c) - 1
+
 
             except ValueError:
                 print("輸入錯誤，請輸入數字或指令 (D, F, R)")
@@ -268,7 +285,8 @@ def game_loop():
                         for cc in range(cols):
                             matrix[rr][cc].clicked = True
 
-                    print_board(matrix, rows, cols, mine_count)
+                    print_board(matrix, rows, cols, mine_count, start_time)
+
                     break
 
             print_board(matrix, rows, cols, mine_count, start_time)
