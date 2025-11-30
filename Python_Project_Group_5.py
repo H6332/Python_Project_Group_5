@@ -20,7 +20,6 @@ def create_board(level):
     elif level == 3:
         rows, cols, mine_count = 16, 30, 99
 
-
     matrix = [[Board_Information() for _ in range(cols)] for _ in range(rows)]
     return matrix, rows, cols, mine_count
 
@@ -41,10 +40,8 @@ def place_mines(matrix, rows, cols, mine_count, safe_r, safe_c):
         pos for pos in all_positions if pos not in safe_positions]
     mined_positions = random.sample(available_positions, mine_count)
 
-
     for r, c in mined_positions:
         matrix[r][c].is_mine = True
-
 
     # 設置周圍地雷數
     for r in range(rows):
@@ -63,12 +60,6 @@ def introduction():
     print("輸入 'R' 可隨時重新開始")
     print("地圖符號： #=未翻開 *=地雷")
     print("=======================")
-
-
-    # 嘗試插旗（原本沒有旗）且旗子已達上限
-    if not cell.flag and flag_count >= mine_count:
-        print("🚫 旗子已達上限，不能再插了！")
-        return
 
 
 def choose_difficulty():
@@ -142,7 +133,6 @@ def toggle_flag(matrix, r, c):
     print(">>> 已插旗" if cell.flag else ">>> 已拔旗")
 
 
-
 def reveal_cell(matrix, rows, cols, r, c):
     cell = matrix[r][c]
     if cell.clicked or cell.flag:
@@ -174,7 +164,6 @@ def check_win(matrix, rows, cols, mine_count):
     clicked_count = sum(1 for r in range(rows)
                         for c in range(cols) if matrix[r][c].clicked)
     return clicked_count == rows * cols - mine_count
-
 
 
 # ---------- 主遊戲迴圈 ----------
@@ -239,7 +228,7 @@ def game_loop():
             if check_win(matrix, rows, cols, mine_count):
                 print("🎉 恭喜你贏了！")
                 break
-    
+
         again = input("要再玩一局嗎？(Y/N): ").upper()
         if again != "Y":
             print("感謝遊玩，再見！")
