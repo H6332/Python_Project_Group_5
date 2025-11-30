@@ -124,13 +124,33 @@ def print_board(matrix, rows, cols, mine_count, start_time=None):
     print("-" * (cols * 3 + 4))
 
 
-def toggle_flag(matrix, r, c):
+def toggle_flag(matrix, r, c, mine_count):
+    # 計算目前旗數量
+    current_flags = sum(
+        1 for rr in range(len(matrix)) for cc in range(len(matrix[0])) if matrix[rr][cc].flag
+    )
+
     cell = matrix[r][c]
+
+    # 已翻開不能插旗
     if cell.clicked:
         print("不能在已翻開的格子插旗！")
         return
-    cell.flag = not cell.flag
-    print(">>> 已插旗" if cell.flag else ">>> 已拔旗")
+
+    # 如果是拔旗，直接允許
+    if cell.flag:
+        cell.flag = False
+        print(">>> 已拔旗")
+        return
+
+    # 如果插旗但達到上限
+    if current_flags >= mine_count:
+        print(f"🚫 旗子數量已達上限（{mine_count}）！不能再插囉！")
+        return
+
+    # 插旗成功
+    cell.flag = True
+    print(">>> 已插旗")
 
 
 def reveal_cell(matrix, rows, cols, r, c):
@@ -160,7 +180,6 @@ def reveal_cell(matrix, rows, cols, r, c):
 
 
 def check_win(matrix, rows, cols, mine_count):
-
     clicked_count = sum(1 for r in range(rows)
                         for c in range(cols) if matrix[r][c].clicked)
     return clicked_count == rows * cols - mine_count
@@ -182,14 +201,14 @@ def game_loop():
             user_input = input(
                 f"請輸入 ROW (1~{rows}) 或輸入 D/F 切換, R 重開: ").upper().strip()
 
+            # 指令
             if user_input == "R":
                 print("\n🔄 正在開始新的一局...\n")
-                break
+                return
 
             if user_input == "D":
                 current_mode = 'D'
                 print(">>> 切換為：挖掘模式")
-
                 continue
 
             if user_input == "F":
@@ -197,26 +216,46 @@ def game_loop():
                 print(">>> 切換為：插旗模式")
                 continue
 
+            # --- ROW（不能反悔） ---
             try:
                 r = int(user_input) - 1
-                c = int(input(f"請輸入 COL (1~{cols}): ")) - 1
             except ValueError:
                 print("輸入錯誤，請輸入數字或指令 (D, F, R)")
                 continue
 
-            if not (0 <= r < rows and 0 <= c < cols):
-                print(f"超出地圖範圍 (請輸入 1 ~ {rows} 之間的數字)")
+            if not (0 <= r < rows):
+                print(f"超出地圖範圍 (請輸入 1 ~ {rows})")
                 continue
 
+            # --- COL（可按 B 返回） ---
+            col_input = input(
+                f"請輸入 COL (1~{cols})，或輸入 B 返回上一層: ").upper().strip()
+
+            if col_input == "B":
+                print("↩️ 已返回上一層（重新輸入 D / F 或 ROW）")
+                continue
+
+            try:
+                c = int(col_input) - 1
+            except ValueError:
+                print("輸入錯誤，請輸入數字或 B 返回")
+                continue
+
+            if not (0 <= c < cols):
+                print(f"超出地圖範圍 (請輸入 1~{cols})")
+                continue
+
+            # --- 執行動作 ---
             if current_mode == "F":
-                toggle_flag(matrix, r, c)
+                toggle_flag(matrix, r, c, mine_count)
+
             elif current_mode == "D":
                 if first_click:
                     place_mines(matrix, rows, cols, mine_count, r, c)
                     first_click = False
                 hit_mine = reveal_cell(matrix, rows, cols, r, c)
                 if hit_mine:
-                    print("\n" + "="*40 + "\n💥 你踩到地雷！遊戲結束！")
+                    print("\n" + "=" * 40 + "\n💥 你踩到地雷！遊戲結束！")
                     for rr in range(rows):
                         for cc in range(cols):
                             matrix[rr][cc].clicked = True
@@ -237,7 +276,8 @@ def game_loop():
 
 def main():
     introduction()
-    game_loop()
+    while True:
+        game_loop()
 
 
 if __name__ == "__main__":
